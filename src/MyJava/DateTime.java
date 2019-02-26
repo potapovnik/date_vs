@@ -17,25 +17,53 @@ public class DateTime implements AbstractDateInterface {
 
     @Override
     public boolean validate() {
-        return false;
+        if (sec<0||sec>SECONDS_IN_DAY||month<0||month>12||year<0){
+            return false;
+        }
+        return true;
     }
 
     @Override
     public void addDays(int days) {
-        var seconds = days * SECONDS_IN_DAY;
-        sec += seconds;
+        if (days>0) {
+            var seconds = days * SECONDS_IN_DAY;
+            sec += seconds;
 
-        while(sec > SECONDS_IN_DAY * dayInMonth()) {
-            sec -= SECONDS_IN_DAY * dayInMonth();
-            addMonths(1);
+            while (sec > SECONDS_IN_DAY * dayInMonth()) {
+                sec -= SECONDS_IN_DAY * dayInMonth();
+                addMonths(1);
+            }
+        } else {
+            sec-=days*SECONDS_IN_DAY;
+            while (sec<0) {
+                int i=0;
+                while (sec<0){
+                    sec+=dayOfMonth[i];
+                    i++;
+                }
+                month-=i;
+                if (sec<0){
+                    addYears(-1);
+                    month=12;
+                }
+            }
         }
     }
 
     @Override
     public void addMonths(int months) {
-        month += months;
-        year += month / MONTH_IN_YEAR;
-        month %= MONTH_IN_YEAR;
+        if (months>0) {
+            month += months;
+            year += month / MONTH_IN_YEAR;
+            month %= MONTH_IN_YEAR;
+        }
+        else {
+            month-=months;
+            while (month<0){
+                month+=12;
+                addYears(-1);
+            }
+        }
     }
 
     @Override
@@ -60,7 +88,7 @@ public class DateTime implements AbstractDateInterface {
 
     @Override
     public int dayOfWeek() {
-        int days=this.getDay();
+        int days=getDay();
         while (days>7){
             days-=7;
         }
@@ -80,17 +108,33 @@ public class DateTime implements AbstractDateInterface {
 
     @Override
     public AbstractDateInterface parse(String date) {
-        return null;
+        DateTime parse=new DateTime();
+        parse.year=Integer.parseInt(date.substring(0,4));
+        parse.month=Integer.parseInt(date.substring(6,7));
+         parse.sec=Integer.parseInt(date.substring(9,10))*SECONDS_IN_DAY;
+         return parse;
+
     }
 
     @Override
     public String toStringDate() {
-        return new String("день:"+this.getDay()+"месяц:"+month+"год:"+year);
+        return new String("день:"+getDay()+"месяц:"+month+"год:"+year);
     }
 
     @Override
     public long toUInt64() {
-        return 0;
+        Long allSec=Long.parseLong(String.valueOf(sec));
+        int allDay=0;
+        for (int i=0;i<month;i++){
+            allDay+=dayOfMonth[i];
+        }
+        int allDayInYear=0;
+        for (int i=0;i<13;i++){
+            allDayInYear=allDayInYear+year*dayOfMonth[i];
+        }
+        allDay+=allDayInYear;
+        allSec+=Long.parseLong(String.valueOf(allDay));
+        return allSec;
     }
 
     private boolean isLoopYear() {
@@ -103,5 +147,13 @@ public class DateTime implements AbstractDateInterface {
 
         return result;
     }
-
+    @Override
+    public boolean equals(Object obj) {
+        if (obj==this)
+            return true;
+        if (obj instanceof DateTime){
+            return this.toUInt64()==((DateTime) obj).toUInt64();
+        }
+        return false;
+    }
 }

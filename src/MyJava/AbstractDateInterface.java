@@ -29,4 +29,5 @@ public interface AbstractDateInterface {
     public String toStringDate();
 
     public long toUInt64();
+
 }
