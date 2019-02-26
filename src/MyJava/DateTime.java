@@ -2,19 +2,18 @@ package MyJava;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 
-public class DateSec implements Date{
-    int sec;
-    int month;
-    int year;
+public class DateTime implements AbstractDateInterface {
+    private int sec;
+    private int month;
+    private int year;
 
-    @Override
-    public int dateTimeCmp(Date a, Date b) {
-        if (a.getDay()== b.getDay()&& a.getMonth()==b.getMonth()&& a.getYear()==b.getYear())
-            return 1;
-        return 0;
-    }
+    private int[] dayOfMonth =
+            {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    private int SECONDS_IN_DAY = 86400;
+    private int MONTH_IN_YEAR = 12;
+
 
     @Override
     public boolean validate() {
@@ -23,22 +22,30 @@ public class DateSec implements Date{
 
     @Override
     public void addDays(int days) {
+        var seconds = days * SECONDS_IN_DAY;
+        sec += seconds;
 
+        while(sec > SECONDS_IN_DAY * dayInMonth()) {
+            sec -= SECONDS_IN_DAY * dayInMonth();
+            addMonths(1);
+        }
     }
 
     @Override
     public void addMonths(int months) {
-
+        month += months;
+        year += month / MONTH_IN_YEAR;
+        month %= MONTH_IN_YEAR;
     }
 
     @Override
     public void addYears(int years) {
-        this.year+=years;
+        this.year += years;
     }
 
     @Override
     public int getDay() {
-        return (int)Math.ceil(((double) sec)/86400.0);
+        return sec / SECONDS_IN_DAY;
     }
 
     @Override
@@ -61,10 +68,10 @@ public class DateSec implements Date{
     }
 
     @Override
-    public Date getNow() {
+    public AbstractDateInterface getNow() {
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         java.util.Date date = new java.util.Date();
-        DateSec now=new DateSec();
+        DateTime now=new DateTime();
         now.year=Integer.parseInt(dateFormat.format(date).substring(0,4));
         now.month=Integer.parseInt(dateFormat.format(date).substring(5,7));
         now.sec=Integer.parseInt(dateFormat.format(date).substring(8,9))*3600*24+Integer.parseInt(dateFormat.format(date).substring(11,13))*3600+Integer.parseInt(dateFormat.format(date).substring(14,16))*60+Integer.parseInt(dateFormat.format(date).substring(17,19));
@@ -72,7 +79,7 @@ public class DateSec implements Date{
     }
 
     @Override
-    public Date Parser(String date) {
+    public AbstractDateInterface parse(String date) {
         return null;
     }
 
@@ -82,8 +89,19 @@ public class DateSec implements Date{
     }
 
     @Override
-    public long ToUInt64() {
+    public long toUInt64() {
         return 0;
+    }
+
+    private boolean isLoopYear() {
+        return (year % 400 == 0) || (year % 100 != 0 && year % 4 == 0);
+    }
+    private int dayInMonth() {
+        var result = dayOfMonth[month - 1];
+        if(month == 2 && isLoopYear())
+            result += 1;
+
+        return result;
     }
 
 }
