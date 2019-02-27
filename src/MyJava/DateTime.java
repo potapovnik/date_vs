@@ -1,7 +1,9 @@
 package MyJava;
 
+import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class DateTime implements AbstractDateInterface {
     private int sec;
@@ -17,10 +19,9 @@ public class DateTime implements AbstractDateInterface {
 
     @Override
     public boolean validate() {
-        if (sec<0||sec>SECONDS_IN_DAY||month<0||month>12||year<0){
-            return false;
-        }
-        return true;
+        return sec >= 0 && sec <= SECONDS_IN_DAY
+                && month >= 0 && month <= 12
+                && year >= 0;
     }
 
     @Override
@@ -97,12 +98,25 @@ public class DateTime implements AbstractDateInterface {
 
     @Override
     public AbstractDateInterface getNow() {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        java.util.Date date = new java.util.Date();
-        DateTime now=new DateTime();
-        now.year=Integer.parseInt(dateFormat.format(date).substring(0,4));
-        now.month=Integer.parseInt(dateFormat.format(date).substring(5,7));
-        now.sec=Integer.parseInt(dateFormat.format(date).substring(8,9))*3600*24+Integer.parseInt(dateFormat.format(date).substring(11,13))*3600+Integer.parseInt(dateFormat.format(date).substring(14,16))*60+Integer.parseInt(dateFormat.format(date).substring(17,19));
+        Date date = new Date();
+        DateTime now = new DateTime();
+
+        var sec = date.getTime();
+        var days = Math.ceil((double) sec / SECONDS_IN_DAY / 1000);
+        var year = 1970;
+        for(int daysInYear = 365; days > daysInYear ; days -= daysInYear, year++) {
+            daysInYear = isLoopYear(year) ? 366 : 365;
+        }
+        now.year = year;
+
+        var month = 0;
+        for(int daysInMonth = dayInMonth(month); days > daysInMonth; days -=daysInMonth, month++) {
+            daysInMonth = dayInMonth(month);
+        }
+        now.month = month;
+
+        now.sec = (int)(days * SECONDS_IN_DAY);
+
         return now;
     }
 
@@ -129,7 +143,7 @@ public class DateTime implements AbstractDateInterface {
             allDay+=dayOfMonth[i];
         }
         int allDayInYear=0;
-        for (int i=0;i<13;i++){
+        for (int i=0;i<12;i++){
             allDayInYear=allDayInYear+year*dayOfMonth[i];
         }
         allDay+=allDayInYear;
@@ -138,11 +152,17 @@ public class DateTime implements AbstractDateInterface {
     }
 
     private boolean isLoopYear() {
+        return isLoopYear(year);
+    }
+    private boolean isLoopYear(int year) {
         return (year % 400 == 0) || (year % 100 != 0 && year % 4 == 0);
     }
     private int dayInMonth() {
-        var result = dayOfMonth[month - 1];
-        if(month == 2 && isLoopYear())
+        return dayInMonth(month);
+    }
+    private int dayInMonth(int month) {
+        var result = dayOfMonth[month];
+        if(month == 1 && isLoopYear())
             result += 1;
 
         return result;

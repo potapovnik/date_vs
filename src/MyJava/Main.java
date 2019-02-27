@@ -3,9 +3,10 @@ package MyJava;
 public class Main {
 
     public static void main(String[] args) {
-        DateTime now=new DateTime();
-        now.getNow();
+        DateTime date = new DateTime();
+        var now = date.getNow();
 
+        System.out.println(now.toStringDate());
 
     }
 }
